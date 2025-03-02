@@ -11,11 +11,18 @@ export default function Home() {
     const sendMessage = async () => {
         if (!message.trim()) return;
 
+        const user = auth.currentUser;
+
+        if(!user)
+        {
+            toast.error("User not logged in");
+            return;
+        }
         try {
             const res = await fetch("http://localhost:5000/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message }),
+                body: JSON.stringify({ message , userId: user.uid }),
             });
 
             const data = await res.json(); 
@@ -32,11 +39,24 @@ export default function Home() {
             if (!user) {
                 navigate("/login");
                 toast.error("You must be logged in to access this page");
+            }else{
+                fetchChatHistory(user.uid);
             }
         });
 
         return () => unsubscribe();
     }, [navigate]);
+
+    const fetchChatHistory= async(userId)=>{
+        try{
+            const res = await fetch(`http://localhost:5000/api/chat/history?userId=${userId}`);
+            const data = await res.json();
+            setChat(Array.isArray(data.messages) ? data.messages : []);
+        }catch(error)
+        {
+            console.log(error.message);
+        }
+    }
 
     async function handleLogout() {
         try {
@@ -51,7 +71,7 @@ export default function Home() {
     return (
         <div>
             <div>
-                {chat.map((c, idx) => (
+                {Array.isArray(chat) && chat.map((c, idx) => (
                     <div key={idx}>
                         <h3 style={{color:"white"}}>You:</h3> {c.user} <br />
                         <h3 style={{color:"white"}}>Bot:</h3> {c.bot}

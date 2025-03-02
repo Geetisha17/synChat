@@ -2,7 +2,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import {auth} from '../firebase';
 import { toast } from "react-toastify";
-import SighUpGoogle from "./sighUpGoogle";
+import SighUpGoogle from "./SignUpGoogle";
 
 export default function SignUp() {
     const [email,setEmail] = useState("");
