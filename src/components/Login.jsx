@@ -4,6 +4,9 @@ import { auth } from "../firebase";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import SignUpGoogle from "./SignUpGoogle";
+import '../App.css';
+import { Link } from "react-router-dom";
+
 export default function Login() {
     const [email,setEmail] = useState("");
     const [password,setPassword] = useState("");
@@ -49,6 +52,7 @@ export default function Login() {
         <button className="submit button" type="submit">Submit</button>
        </div>
        <SignUpGoogle/>
+       <h4>Dont have an account? <Link to='/signup'>SignUp</Link></h4>
        </form>
     </div>
   )

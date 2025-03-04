@@ -33,7 +33,7 @@ app.post("/api/chat", async (req, res) => {
             {
                 model: "mistralai/Mistral-7B-v0.1", 
                 messages: [{ role: "user", content: message }],
-                stream:true
+                
             },
             {
                 headers: {
@@ -42,7 +42,7 @@ app.post("/api/chat", async (req, res) => {
                 },
             }
         );
-        const botReply = response.data.choices[0].message.content;
+        const botReply = response.data.choices[0].message.content.replace(/<\|im_start\|>/g, "").replace(/<\|im_end\|>/g, "").trim();
 
         let chat = await Chat.findOne({userId});
 
@@ -76,7 +76,7 @@ app.get("/api/chat/history",async(req,res)=>{
         {
             return res.json({messages:[]});
         }
-        res.json({messgaes:chat.messages || []});
+        res.json({messages:chat.messages || []});
     }catch(error)
     {
         console.log("Error here ",error.message);

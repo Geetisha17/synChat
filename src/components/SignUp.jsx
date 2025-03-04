@@ -3,7 +3,8 @@ import { useState } from "react";
 import {auth} from '../firebase';
 import { toast } from "react-toastify";
 import SighUpGoogle from "./SignUpGoogle";
-
+import { Link } from "react-router-dom";
+import '../App.css'
 export default function SignUp() {
     const [email,setEmail] = useState("");
     const [password,setPassword] = useState("");
@@ -58,6 +59,7 @@ export default function SignUp() {
             <button type="submit">Submit</button>
         </div>
         <SighUpGoogle/>
+        <h4>Already have an account? <Link to='/'>Login</Link></h4>
         </form>
     </div>
   )
