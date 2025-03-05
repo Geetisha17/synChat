@@ -1,25 +1,36 @@
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
-import {auth} from '../firebase';
+import {auth , db} from '../firebase';
 import { toast } from "react-toastify";
-import SighUpGoogle from "./SignUpGoogle";
-import { Link } from "react-router-dom";
+import SignUpGoogle from './SignUpGoogle';
+import { Link , useNavigate } from "react-router-dom";
+import { setDoc , doc } from "firebase/firestore";
 import '../App.css'
 export default function SignUp() {
     const [email,setEmail] = useState("");
     const [password,setPassword] = useState("");
     const [name,setName] = useState(""); 
 
+    const navigate = useNavigate();
+
     const handleRegister= async(e)=>{
         e.preventDefault();
         try {
-            await createUserWithEmailAndPassword(auth,email,password);
-            const user = auth.currentUser;
-            console.log(user);
-            console.log("User registered succesfully");
+            const userCredential = await createUserWithEmailAndPassword(auth,email,password);
+            const user = userCredential.user;
+
+            if(user)
+            {
+                await setDoc(doc(db,"Users",user.uid),{
+                    email: user.email,
+                    name: name
+                });
+            }
             toast.success("User is Registered");
+            console.log("User registered succesfully");
+            navigate("/");
         } catch (error) {
-            toast.error("User not registered");
+            toast.error(`User not registered ${error.message}`);
             console.log(error.message);
         }
     }
@@ -58,7 +69,7 @@ export default function SignUp() {
         <div>
             <button type="submit">Submit</button>
         </div>
-        <SighUpGoogle/>
+        <SignUpGoogle/>
         <h4>Already have an account? <Link to='/'>Login</Link></h4>
         </form>
     </div>

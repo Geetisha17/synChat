@@ -84,6 +84,29 @@ app.get("/api/chat/history",async(req,res)=>{
     }
 })
 
+app.delete("/api/chat/delete",async(req,res)=>{
+    try{
+        const {userId , chatIndex} = req.body;
+        if(!userId || chatIndex === undefined || chatIndex ===null)  
+            return res.status(400).json({error:"User ID and chat index are required!!"});
+        
+        const chatDoc = await Chat.findOne({userId});
+        if(!chatDoc || !Array.isArray(chatDoc.messages)) 
+            return res.status(404).json({error:"Chat not found"});
+
+        if(chatIndex <0 || chatIndex >= chatDoc.messages.length)
+            return res.status(400).json({messages:"Invalid chat"});
+
+        chatDoc.messages.splice(chatIndex,1);
+        await chatDoc.save();
+
+        res.status(200).json({messgae: "Chat has been deleted successfully"});
+    }catch(error)
+    {
+        res.status(500).json({error:error.message});
+    }
+})
+
 
 const PORT = process.env.PORT || 3000;
 
