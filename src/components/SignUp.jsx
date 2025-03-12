@@ -30,7 +30,7 @@ export default function SignUp() {
             console.log("User registered succesfully");
             navigate("/");
         } catch (error) {
-            toast.error(`User not registered ${error.message}`);
+            // toast.error(`User not registered ${error.message}`);
             console.log(error.message);
         }
     }

@@ -19,6 +19,9 @@ export default function Home() {
             toast.error("User not logged in");
             return;
         }
+
+        setChat(prevChat => [...prevChat, { user: message, bot: <span className="bouncing-dots"></span> }]);
+        setMessage("");
         try {
             const res = await fetch("http://localhost:5000/api/chat", {
                 method: "POST",
@@ -28,10 +31,19 @@ export default function Home() {
 
             const data = await res.json();
             const cleanReply = data.reply.replace(/<\|im_[^>]+\|>/g, "").trim();
-            setChat((prevChat) => [...prevChat, { user: message ,  bot: cleanReply }]);
-            setMessage("");
+            setChat(prevChat=>{
+                const updatedChat = [...prevChat];
+                updatedChat[updatedChat.length-1].bot = cleanReply;
+                return updatedChat;
+            })
+            
         } catch (error) {
-            console.log(error.message);
+            console.error(error.message);
+        setChat(prevChat => {
+            const updatedChat = [...prevChat];
+            updatedChat[updatedChat.length - 1].bot = "Error: Unable to get response.";
+            return updatedChat;
+        });
         }
     };
 
@@ -94,7 +106,9 @@ export default function Home() {
                 setUserInfo(userSnap.data());
             }
         } catch (error) {
-            toast.error(`Error ${error.message}`);
+            console.log(error.message);
+            
+            // toast.error(`Error ${error.message}`);
         }
     }
 
@@ -113,7 +127,7 @@ export default function Home() {
     async function handleLogout() {
         try {
             await auth.signOut();
-            navigate("/login");
+            navigate("/");
             toast.success("Successfully logged out");
         } catch (e) {
             console.log(e.message);
@@ -126,9 +140,9 @@ export default function Home() {
                 <h2>AI Chat Bot</h2>
                 {
                     userInfo && (
-                        <div>
+                        <div className="userInfo-pfp">
                             <h3>{userInfo.user}</h3>
-                            <h3>{userInfo.email}</h3>
+                            <h4>{userInfo.email}</h4>
                         </div>
                     )
                 }
@@ -138,7 +152,7 @@ export default function Home() {
                     {
                         previousChats.map((c, idx) => (
                             <div key={idx} className="chat-list-item">
-                                <button onClick={() => loadChat(c)}>
+                                <button className="prevChat-btn" onClick={() => loadChat(c)}>
                                     Chat {previousChats.length - idx}
                                 </button>
                                 <button className="delete-btn" onClick={() => deleteChat(idx)}>🗑️</button>

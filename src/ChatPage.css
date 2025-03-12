@@ -91,6 +91,35 @@ body {
     position: relative;
 }
 
+.chat-list-item{
+    position: relative;
+}
+.delete-btn{
+    position: absolute;
+    background: none;
+    left: 67px;
+    top: 8px;
+}
+.sidebar h2{
+    color: blueviolet;
+}
+.userInfo-pfp{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+.userInfo-pfp h4{
+    margin-top: -10px;
+}
+.delete-btn:hover{
+    background: none;
+}
+
+.prevChat-btn{
+    margin-top: 10px;
+}
+
 textarea {
     padding: 12px;
     border-radius: 8px;
@@ -127,11 +156,6 @@ textarea {
     cursor: pointer;
     border-radius: 8px;
     font-size: 16px;
-    transition: background 0.2s ease;
-}
-
-button:hover {
-    background-color: #005ecb;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -146,3 +170,72 @@ button:hover {
 .chat-messages::-webkit-scrollbar-track {
     background: #212121;
 }
+
+.bouncing-dots {
+    display: inline-flex;
+    gap: 4px;
+}
+    
+.bouncing-dots::before,
+.bouncing-dots::after,
+.bouncing-dots span {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background-color: #555;
+        border-radius: 50%;
+        display: inline-block;
+        animation: bounce 1.4s infinite ease-in-out both;
+    }
+    
+    .bouncing-dots::before {
+        animation-delay: -0.32s;
+    }
+    
+    .bouncing-dots span {
+        animation-delay: -0.16s;
+    }
+    
+    @keyframes bounce {
+        0%, 80%, 100% {
+            transform: scale(0);
+        }
+        40% {
+            transform: scale(1);
+        }
+    }
+.bouncing-dots {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.bouncing-dots::before,
+.bouncing-dots::after,
+.bouncing-dots span {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background-color: #555;
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.bouncing-dots::before {
+    animation-delay: -0.32s;
+}
+
+.bouncing-dots span {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+    
