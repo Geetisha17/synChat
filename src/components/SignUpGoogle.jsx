@@ -29,7 +29,6 @@ export default function SignUpGoogle() {
             }
         } catch (error) {
             console.error("Google Sign-In Error:", error);
-            // toast.error("Google Sign-In Failed!");
         }
     };
 
