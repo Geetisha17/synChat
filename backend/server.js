@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -6,9 +8,9 @@ import axios from "axios";
 import connectDB from "./database.js";
 import Chat from './models/Chat.js';
 
-dotenv.config();
-const API_KEY = process.env.FOREFRONT_API_KEY; 
+const API_KEY = globalThis.process.env.FOREFRONT_API_KEY; 
 const FOREFRONT_API_URL = "https://api.forefront.ai/v1/chat/completions";
+console.log(API_KEY);
 
 const app = express();
 app.use(cors());
@@ -108,7 +110,7 @@ app.delete("/api/chat/delete",async(req,res)=>{
 })
 
 
-const PORT = process.env.PORT || 3000;
+const PORT = globalThis.process.env.PORT || 3000;
 
 app.listen(PORT, () => console.log(`Server is listening at port ${PORT}`));
 
