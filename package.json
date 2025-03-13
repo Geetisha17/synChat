@@ -22,6 +22,7 @@
     "forefront": "^0.1.24",
     "mongoose": "^8.11.0",
     "openai": "^4.85.4",
+    "pm2": "^5.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0",

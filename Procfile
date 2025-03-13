@@ -1,1 +1,1 @@
-web: node --expose-gc backend/server.js
+web: pm2 start backend/server.js --no-daemon
