@@ -18,13 +18,13 @@ const FOREFRONT_API_URL = "https://api.forefront.ai/v1/chat/completions";
 
 const app = express();
 app.use(cors());
-app.use(express.static(path.join(__dirname, "build")));
+app.use(express.static(path.join(__dirname, "../dist")));
 app.use(bodyParser.json());
 
 connectDB();
 
 app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "build", "index.html"));
+    res.sendFile(path.join(__dirname,"../dist", "index.html"));
   });
 
 app.post("/api/chat", async (req, res) => {
