@@ -1,1 +1,1 @@
-web: node --expose-gc  backend/server.js 
+web: node --expose-gc backend/server.js
