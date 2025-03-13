@@ -1,25 +1,31 @@
 import dotenv from "dotenv";
 dotenv.config();
-
+import { fileURLToPath } from "url";
 import express from "express";
+import path from "path";
 import cors from "cors";
 import bodyParser from "body-parser";
 import axios from "axios"; 
 import connectDB from "./database.js";
 import Chat from './models/Chat.js';
 
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const API_KEY = process.env.FOREFRONT_API_KEY; 
 const FOREFRONT_API_URL = "https://api.forefront.ai/v1/chat/completions";
 
 const app = express();
 app.use(cors());
+app.use(express.static(path.join(__dirname, "build")));
 app.use(bodyParser.json());
 
 connectDB();
 
-app.get("/", (req, res) => {
-    res.send("API is running...");
-});
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "build", "index.html"));
+  });
 
 app.post("/api/chat", async (req, res) => {
     const { message , userId } = req.body;
