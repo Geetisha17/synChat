@@ -50,21 +50,23 @@ SynChat is built with a clear and modular architecture, ensuring that the projec
 
 ## How to Run Locally
 
-```bash
-# 1. Clone the repository
-## Installation
 1. Clone the repository:
    ```bash
    git clone https://github.com/your/repository.git
+   ```
+
 2. Navigate to the project directory:
    ```bash
      cd synChat
+   ```
 3. Install dependencies:
    ```bash
      npm install
+   ```
 4. Start the server:
    ```bash
     npm start
+   ```
 5. Open your browser and go to:
    ```bash
     http://localhost:3000 to use the application.   
