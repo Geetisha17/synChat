@@ -9,7 +9,6 @@ import axios from "axios";
 import connectDB from "./database.js";
 import Chat from './models/Chat.js';
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

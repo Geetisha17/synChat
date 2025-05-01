@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import SignUpGoogle from "./SignUpGoogle";
 import '../App.css';
 import { Link } from "react-router-dom";
+import ThreeBackground from "./ThreeBackground";
 
 export default function Login() {
     const [email,setEmail] = useState("");
@@ -27,6 +28,7 @@ export default function Login() {
     
   return (
     <div>
+        <ThreeBackground/>
        <form onSubmit={handleSubmit}>
        <h3>Login</h3>
         <div>

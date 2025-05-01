@@ -6,6 +6,7 @@ import SignUpGoogle from './SignUpGoogle';
 import { Link , useNavigate } from "react-router-dom";
 import { setDoc , doc } from "firebase/firestore";
 import '../App.css'
+import ThreeBackground from "./ThreeBackground";
 export default function SignUp() {
     const [email,setEmail] = useState("");
     const [password,setPassword] = useState("");
@@ -36,6 +37,7 @@ export default function SignUp() {
     }
   return (
     <div>
+        <ThreeBackground/>
         <form onSubmit={handleRegister}>
             <h3>Sign Up</h3>
             <div>
