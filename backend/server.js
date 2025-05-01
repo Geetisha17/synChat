@@ -106,7 +106,7 @@ app.delete("/api/chat/delete",async(req,res)=>{
         chatDoc.messages.splice(chatIndex,1);
         await chatDoc.save();
 
-        res.status(200).json({messgae: "Chat has been deleted successfully"});
+        res.status(200).json({messgae: "Chat has been deleted"});
     }catch(error)
     {
         res.status(500).json({error:error.message});
@@ -117,7 +117,7 @@ setInterval(() => {
     if (typeof globalThis.gc === "function") {
         globalThis.gc();
     }
-}, 60000); // Every minute
+}, 60000); 
 
 
 
