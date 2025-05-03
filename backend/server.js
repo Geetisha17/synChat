@@ -50,15 +50,14 @@ app.post("/api/chat", async (req, res) => {
         );
         const botReply = response.data.choices[0].message.content.replace(/<\|im_start\|>/g, "").replace(/<\|im_end\|>/g, "").trim();
 
-        let chat = await Chat.findOne({userId});
+        let currentChat;
+        currentChat = new Chat({
+            userId,
+            name: "Chat " + new Date().toLocaleString(),
+            messages: [{ user: message, bot: botReply }]
+        });
 
-        if(!chat)
-        {
-            chat = new Chat({userId, messages:[]});
-        }
-
-        chat.messages.push({user: message, bot:botReply});
-        await chat.save();
+        await currentChat.save();
 
         res.json({ reply: botReply });
     } catch (error) {
@@ -76,13 +75,13 @@ app.get("/api/chat/history",async(req,res)=>{
     }
 
     try{
-        const chat = await Chat.findOne({userId});
+        const chat = await Chat.find({userId}).sort({updatedAt:-1});
 
         if(!chat )
         {
             return res.json({messages:[]});
         }
-        res.json({messages:chat.messages || []});
+        res.json({chat});
     }catch(error)
     {
         console.log("Error here ",error.message);
@@ -111,7 +110,8 @@ app.delete("/api/chat/delete",async(req,res)=>{
     {
         res.status(500).json({error:error.message});
     }
-})
+});
+
 setInterval(() => {
     console.log("Running garbage collection");
     if (typeof globalThis.gc === "function") {

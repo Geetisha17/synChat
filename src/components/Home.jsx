@@ -3,6 +3,7 @@ import { auth, db } from "../firebase";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import {doc , getDoc  } from "firebase/firestore";
+import jsPDF from "jspdf";
 import "../ChatPage.css";  
 
 export default function Home() {
@@ -90,7 +91,8 @@ export default function Home() {
         try {
             const res = await fetch(`http://localhost:5000/api/chat/history?userId=${userId}`);
             const data = await res.json();
-            setChat(Array.isArray(data.messages) ? data.messages : []);
+            setPreviousChats(data.chats || []);
+            // setChat(Array.isArray(data.messages) ? data.messages : []);
         } catch (error) {
             console.log(error.message);
         }
@@ -107,10 +109,38 @@ export default function Home() {
             }
         } catch (error) {
             console.log(error.message);
-            
-            // toast.error(`Error ${error.message}`);
         }
     }
+    const downloadFile = (content, filename, type = "text/plain") => {
+        const blob = new Blob([content], { type });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
+    const exportAsPDF = () => {
+        const doc = new jsPDF();
+        let y = 10;
+        chat.forEach((msg) => {
+            doc.text(`You: ${msg.user}`, 10, y);
+            y += 10;
+            doc.text(`Bot: ${msg.bot}`, 10, y);
+            y += 20;
+            if (y > 270) {
+                doc.addPage();
+                y = 10;
+            }
+        });
+        doc.save("chat.pdf");
+    };
+    const formatChatAsText = () => {
+        return chat.map((msg, i) =>
+            `Chat #${i + 1}\nYou: ${msg.user}\nBot: ${msg.bot}\n---\n`
+        ).join("\n");
+    };
+    
 
 
     const setNewChat= ()=>{
@@ -152,10 +182,16 @@ export default function Home() {
                     {
                         previousChats.map((c, idx) => (
                             <div key={idx} className="chat-list-item">
+                                {
+                        previousChats.map((c, idx) => (
+                            <div key={idx} className="chat-list-item">
                                 <button className="prevChat-btn" onClick={() => loadChat(c)}>
                                     Chat {previousChats.length - idx}
                                 </button>
                                 <button className="delete-btn" onClick={() => deleteChat(idx)}>🗑️</button>
+                            </div>
+                        ))
+                    }
                             </div>
                         ))
                     }
@@ -164,6 +200,10 @@ export default function Home() {
             </div>
 
             <div className="chat-window">
+            <div className="export-buttons">
+                <button onClick={() => downloadFile(formatChatAsText(), "chat.txt")} title="Download as Text">📄 TXT</button>
+                <button onClick={exportAsPDF} title="Download as PDF">📕 PDF</button>
+            </div>
                 <div className="chat-messages">
                         {Array.isArray(chat) &&
                         chat.map((c, idx) => (
