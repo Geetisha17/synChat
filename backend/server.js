@@ -42,15 +42,6 @@ app.post("/api/message", async (req, res) => {
             }
         );
         const botReply = response.data.choices[0].message.content.replace(/<\|im_start\|>/g, "").replace(/<\|im_end\|>/g, "").trim();
-
-        // let currentChat = new Chat({
-        //     userId,
-        //     name: "Chat " + new Date().toLocaleString(),
-        //     messages: [{ user: message, bot: botReply }]
-        // });
-        // await currentChat.save();
-
-        // res.json({ reply: botReply });
         res.status(200).json({reply : botReply});
     } catch (error) {
         console.error("Forefront API Error:", error.response ? error.response.data : error.message);
@@ -81,7 +72,6 @@ app.get("/api/chat/history",async(req,res)=>{
             return res.status(400).json({error: "user Id is required"});
         }
         const chat = await Chat.find({userId});
-        // console.log(chat);
 
         if(chat.length ===0 )
             return res.json({messages:[]});

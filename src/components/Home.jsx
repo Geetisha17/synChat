@@ -157,7 +157,7 @@ export default function Home() {
         ]);
     
         const wordCounts = {};
-        const allWords = messages.flatMap(msg => msg.user.toLowerCase().split(/\W+/)); // split by non-word characters
+        const allWords = messages.flatMap(msg => msg.user.toLowerCase().split(/\W+/));
     
         allWords.forEach(word => {
             if (word && !stopwords.has(word)) {
