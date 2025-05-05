@@ -84,7 +84,7 @@ body {
 }
 
 .logoutBtn {
-    margin-top: auto;
+    margin-top: 10px;
     background-color: #e53935;
 }
 
@@ -111,6 +111,14 @@ body {
   z-index: 2;
   width: auto; 
   height: auto;
+}
+.sidebar{
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.sidebar::-webkit-scrollbar {
+    display: none; 
 }
 .delete-btn:hover{
   background: transparent;

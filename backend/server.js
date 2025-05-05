@@ -4,7 +4,6 @@ import { fileURLToPath } from "url";
 import express from "express";
 import path from "path";
 import cors from "cors";
-import bodyParser from "body-parser";
 import axios from "axios"; 
 import connectDB from "./database.js";
 import Chat from './models/Chat.js';
@@ -17,19 +16,13 @@ const FOREFRONT_API_URL = "https://api.forefront.ai/v1/chat/completions";
 
 const app = express();
 app.use(cors());
-app.use(express.static(path.join(__dirname, "../dist")));
-app.use(bodyParser.json());
-
+app.use(express.json());  
 connectDB();
 
-app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname,"../dist", "index.html"));
-  });
+app.post("/api/message", async (req, res) => {
+    const { message } = req.body;
 
-app.post("/api/chat", async (req, res) => {
-    const { message , userId } = req.body;
-
-    if(!message || !userId) {
+    if(!message) {
         return res.status(400).json({error:"Message and userId required"});
     }
 
@@ -50,61 +43,70 @@ app.post("/api/chat", async (req, res) => {
         );
         const botReply = response.data.choices[0].message.content.replace(/<\|im_start\|>/g, "").replace(/<\|im_end\|>/g, "").trim();
 
-        let currentChat;
-        currentChat = new Chat({
-            userId,
-            name: "Chat " + new Date().toLocaleString(),
-            messages: [{ user: message, bot: botReply }]
-        });
+        // let currentChat = new Chat({
+        //     userId,
+        //     name: "Chat " + new Date().toLocaleString(),
+        //     messages: [{ user: message, bot: botReply }]
+        // });
+        // await currentChat.save();
 
-        await currentChat.save();
-
-        res.json({ reply: botReply });
+        // res.json({ reply: botReply });
+        res.status(200).json({reply : botReply});
     } catch (error) {
         console.error("Forefront API Error:", error.response ? error.response.data : error.message);
         res.status(500).json({ error: "Something went wrong" });
     }
 });
 
-app.get("/api/chat/history",async(req,res)=>{
-    const {userId} = req.query;
+app.post("/api/chat/save",async(req,res)=>{
+    const {userId, messages , name} = req.body;
 
-    if(!userId)
-    {
-        return res.status(400).json({error: "user Id is required"});
+    if(!userId || !messages || messages.length===0)
+        return res.status(400).json({error:"Missing userId or messages"});
+
+    try {
+        const newChat = new Chat({userId , name,messages});
+        await newChat.save();
+
+        res.status(201).json({message:"Chat saved succesfully"});
+    } catch (error) {
+        req.status(500).json({error:error.message});
     }
+})
 
+app.get("/api/chat/history",async(req,res)=>{
     try{
-        const chat = await Chat.find({userId}).sort({updatedAt:-1});
-
-        if(!chat )
-        {
-            return res.json({messages:[]});
+        const {userId} = req.query;
+        if(!userId){
+            return res.status(400).json({error: "user Id is required"});
         }
+        const chat = await Chat.find({userId});
+        // console.log(chat);
+
+        if(chat.length ===0 )
+            return res.json({messages:[]});
+        
         res.json({chat});
+        
     }catch(error)
     {
         console.log("Error here ",error.message);
         res.status(500).json({error:"Something went wrong"});
     }
 })
-
 app.delete("/api/chat/delete",async(req,res)=>{
     try{
         const {userId , chatIndex} = req.body;
         if(!userId || chatIndex === undefined || chatIndex ===null)  
             return res.status(400).json({error:"User ID and chat index are required!!"});
         
-        const chatDoc = await Chat.findOne({userId});
-        if(!chatDoc || !Array.isArray(chatDoc.messages)) 
-            return res.status(404).json({error:"Chat not found"});
+        const chats = await Chat.find({userId});
 
-        if(chatIndex <0 || chatIndex >= chatDoc.messages.length)
+        if(!chats ||  chatIndex <0 || chatIndex >= chats.length)
             return res.status(400).json({messages:"Invalid chat"});
 
-        chatDoc.messages.splice(chatIndex,1);
-        await chatDoc.save();
-
+        const chatToDelete = chats[chatIndex];
+        await Chat.deleteOne({_id:chatToDelete._id});
         res.status(200).json({messgae: "Chat has been deleted"});
     }catch(error)
     {
@@ -119,6 +121,9 @@ setInterval(() => {
     }
 }, 60000); 
 
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname,"../dist", "index.html"));
+  });
 
 
 const PORT = process.env.PORT || 3000;

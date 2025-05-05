@@ -6,8 +6,10 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import '../App.css';
 
 export default function SignUpGoogle() {
+    
     const navigate = useNavigate();
-    const handleGoogleSignIn = async () => {
+    const handleGoogleSignIn = async (e) => {
+        e.preventDefault();
         const auth = getAuth();
         const provider = new GoogleAuthProvider();
 

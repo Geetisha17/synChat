@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import {doc , getDoc  } from "firebase/firestore";
 import jsPDF from "jspdf";
+import ThreeBackground from "./ThreeBackground";
 import "../ChatPage.css";  
 
 export default function Home() {
@@ -11,6 +12,7 @@ export default function Home() {
     const [chat, setChat] = useState([]);
     const [userInfo,setUserInfo] = useState(null);
     const [previousChats,setPreviousChats] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
 
     const sendMessage = async () => {
@@ -21,13 +23,14 @@ export default function Home() {
             return;
         }
 
-        setChat(prevChat => [...prevChat, { user: message, bot: <span className="bouncing-dots"></span> }]);
+        const userMessage = message;
         setMessage("");
+        setChat(prevChat => [...prevChat, { user: userMessage, bot: <span className="bouncing-dots"></span> }]);
         try {
-            const res = await fetch("http://localhost:5000/api/chat", {
+            const res = await fetch("http://localhost:5000/api/message", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message, userId: user.uid }),
+                body: JSON.stringify({message}),
             });
 
             const data = await res.json();
@@ -55,13 +58,15 @@ export default function Home() {
             toast.error("User not logged in");
             return;
         }
-
         try{
             const res = await fetch("http://localhost:5000/api/chat/delete",{
                 method:"DELETE",
                 headers:{"Content-Type":"application/json"},
                 body: JSON.stringify({userId:user.uid , chatIndex:chatsIdx})
-            })
+            });
+
+            const result = await res.json();
+            console.log("Server response:", result);
 
             if(!res.ok) throw new Error("failed to delete chat from server");
 
@@ -70,6 +75,7 @@ export default function Home() {
             toast.success("Chat is sucessfully deleted");
         }catch(error)
         {
+            console.log(error.message);
             toast.error(`Error!! ${error.message}`);
         }
     }
@@ -91,8 +97,12 @@ export default function Home() {
         try {
             const res = await fetch(`http://localhost:5000/api/chat/history?userId=${userId}`);
             const data = await res.json();
-            setPreviousChats(data.chats || []);
-            // setChat(Array.isArray(data.messages) ? data.messages : []);
+            if (Array.isArray(data.chat)) {
+                setPreviousChats(data.chat);
+                console.log(data.chat);
+            } else {
+                setPreviousChats([]);
+            }
         } catch (error) {
             console.log(error.message);
         }
@@ -140,13 +150,56 @@ export default function Home() {
             `Chat #${i + 1}\nYou: ${msg.user}\nBot: ${msg.bot}\n---\n`
         ).join("\n");
     };
+
+    const extractKeyword = (messages) => {
+        const stopwords = new Set([
+            "tell","me","the", "is", "at", "which", "on", "a", "an", "and", "or", "but", "of", "to", "in", "for", "with", "as", "by", "it", "this", "that", "are", "was"
+        ]);
     
+        const wordCounts = {};
+        const allWords = messages.flatMap(msg => msg.user.toLowerCase().split(/\W+/)); // split by non-word characters
+    
+        allWords.forEach(word => {
+            if (word && !stopwords.has(word)) {
+                wordCounts[word] = (wordCounts[word] || 0) + 1;
+            }
+        });
+    
+        const sortedWords = Object.entries(wordCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3) 
+            .map(([word]) => word);
+    
+        return sortedWords.length > 0 ? sortedWords.join(" ") : "Chat";
+    };
+    
+    const setNewChat= async()=>{
+        if(chat.length===0) return;
 
-
-    const setNewChat= ()=>{
-        if(chat.length>0)
+        const user =auth.currentUser;
+        if(!user)
         {
-            setPreviousChats(prev=>[[...chat],...prev]);
+            toast.error("User not logged in");
+            return;
+        }
+        const keyword = extractKeyword(chat);
+
+        try {
+            const res = await fetch("http://localhost:5000/api/chat/save",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body: JSON.stringify({
+                    userId: user.uid,
+                    name:keyword,
+                    messages:chat
+                })
+            });
+            const result = await res.json();
+            if(!res) throw new Error(result.error || "Failed to save");
+
+            setPreviousChats(prev=>[{name:keyword, messages : [...chat]},...prev]);
+        } catch (error) {
+            toast.error("Error in saving chat "+error.message);
         }
         setChat([]);
     }
@@ -163,11 +216,19 @@ export default function Home() {
             console.log(e.message);
         }
     }
-
+    
     return (
         <div className="chat-container">
+            <ThreeBackground/>
             <div className="sidebar">
                 <h2>AI Chat Bot</h2>
+                <input
+                    type="text"
+                    className="chat-search"
+                    placeholder="Search Chats..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
                 {
                     userInfo && (
                         <div className="userInfo-pfp">
@@ -180,21 +241,16 @@ export default function Home() {
                 <div>
                     <h3>Previous Chats</h3>
                     {
-                        previousChats.map((c, idx) => (
-                            <div key={idx} className="chat-list-item">
-                                {
-                        previousChats.map((c, idx) => (
-                            <div key={idx} className="chat-list-item">
-                                <button className="prevChat-btn" onClick={() => loadChat(c)}>
-                                    Chat {previousChats.length - idx}
-                                </button>
-                                <button className="delete-btn" onClick={() => deleteChat(idx)}>🗑️</button>
-                            </div>
-                        ))
-                    }
-                            </div>
-                        ))
-                    }
+            previousChats
+                .map((c, idx) => (
+                    <div key={idx} className="chat-list-item">
+                        <button className="prevChat-btn" onClick={() => loadChat(c.messages)}>
+                            {c.name || `Chat ${previousChats.length - idx}`}
+                        </button>
+                        <button className="delete-btn" onClick={() => deleteChat(idx)}>🗑️</button>
+                    </div>
+                ))
+                }
                 </div>
                 <button className="logoutBtn" onClick={handleLogout}>Logout</button>
             </div>

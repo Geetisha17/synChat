@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const chatSchema = new mongoose.Schema({
     userId: {type:String, required:true},
-    name: { type: String, default: "Chat" },
+    name: { type: String, required:true },
     messages:[
         {
             user: {type: String, required:true},
