@@ -261,6 +261,53 @@ textarea {
     background-color: #b3d4fc;
 } 
 
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 80%;
+}
+
+textarea {
+  width: 100%;
+  padding-right: 40px; 
+}
+
+.icon-wrapper {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+  color: #333;
+}
+
+.clip-icon {
+  font-size: 1.2rem;
+}
+
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  background-color: black;
+  color: white;
+  text-align: center;
+  padding: 5px 8px;
+  border-radius: 4px;
+  position: absolute;
+  top: -30px;
+  right: 0;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  transition: opacity 0.3s ease;
+  z-index: 2;
+}
+
+.icon-wrapper:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+
 @keyframes bounce {
     0%, 80%, 100% {
         transform: scale(0);

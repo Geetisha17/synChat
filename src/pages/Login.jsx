@@ -3,10 +3,10 @@ import { useState } from "react";
 import { auth } from "../firebase";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import SignUpGoogle from "./SignUpGoogle";
+import SignUpGoogle from "../components/SignUpGoogle";
 import '../App.css';
 import { Link } from "react-router-dom";
-import ThreeBackground from "./ThreeBackground";
+import ThreeBackground from "../components/ThreeBackground";
 
 export default function Login() {
     const [email,setEmail] = useState("");

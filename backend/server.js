@@ -11,8 +11,9 @@ import Chat from './models/Chat.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const API_KEY = process.env.FOREFRONT_API_KEY; 
-const FOREFRONT_API_URL = "https://api.forefront.ai/v1/chat/completions";
+const TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions";
+const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
+const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 const app = express();
 app.use(cors());
@@ -28,23 +29,24 @@ app.post("/api/message", async (req, res) => {
 
     try {
         const response = await axios.post(
-            FOREFRONT_API_URL,
+            TOGETHER_API_URL,
             {
-                model: "mistralai/Mistral-7B-v0.1", 
+                model: "mistralai/Mixtral-8x7B-Instruct-v0.1", 
                 messages: [{ role: "user", content: message }],
-                
+                max_tokens: 1024,
+                temperature: 0.7,
             },
             {
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${API_KEY}`, 
+                    Authorization: `Bearer ${TOGETHER_API_KEY}`, 
                 },
             }
         );
-        const botReply = response.data.choices[0].message.content.replace(/<\|im_start\|>/g, "").replace(/<\|im_end\|>/g, "").trim();
+        const botReply = response.data.choices[0].message.content;
         res.status(200).json({reply : botReply});
     } catch (error) {
-        console.error("Forefront API Error:", error.response ? error.response.data : error.message);
+        console.error("Error:", error.response ? error.response.data : error.message);
         res.status(500).json({ error: "Something went wrong" });
     }
 });
@@ -62,6 +64,61 @@ app.post("/api/chat/save",async(req,res)=>{
         res.status(201).json({message:"Chat saved succesfully"});
     } catch (error) {
         req.status(500).json({error:error.message});
+    }
+})
+
+app.post("/api/image",async(req,res)=>{
+    const {prompt} = req.body;
+
+    if(!prompt) return res.status(400).json({error:"Prompt is required"});
+
+    try{
+        const response = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Token ${REPLICATE_API_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        version: "a9758cbf3c55f4e27b5b002fdbb2f90b22be2958ff8339b2af2b6cddc9b4b6d0", // SD 1.5
+        input: { prompt }
+      })
+    });
+
+    const data = await response.json();
+    if (data?.urls?.get) {
+      const getUrl = data.urls.get;
+      let imageUrl;
+
+      for (let i = 0; i < 10; i++) {
+        const resultRes = await fetch(getUrl, {
+          headers: { Authorization: `Token ${REPLICATE_API_TOKEN}` }
+        });
+        const resultData = await resultRes.json();
+
+        if (resultData.status === "succeeded") {
+          imageUrl = resultData.output[0];
+          break;
+        } else if (resultData.status === "failed") {
+          return res.status(500).json({ error: "Image generation failed." });
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1500)); // wait 1.5s
+      }
+
+      if (!imageUrl) {
+        return res.status(500).json({ error: "Image generation timed out." });
+      }
+
+      return res.json({ image: imageUrl });
+    } else {
+      return res.status(500).json({ error: "Failed to start prediction." });
+    }
+    }
+    catch(error)
+    {
+        console.error("Error:", error.response?.data || error.message);
+        res.status(500).json({ error: "Image generation failed" });
     }
 })
 
@@ -114,7 +171,6 @@ setInterval(() => {
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname,"../dist", "index.html"));
   });
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server is listening at port ${PORT}`));

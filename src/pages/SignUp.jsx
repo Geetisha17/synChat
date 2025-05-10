@@ -2,11 +2,11 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import {auth , db} from '../firebase';
 import { toast } from "react-toastify";
-import SignUpGoogle from './SignUpGoogle';
+import SignUpGoogle from '../components/SignUpGoogle';
 import { Link , useNavigate } from "react-router-dom";
 import { setDoc , doc } from "firebase/firestore";
 import '../App.css'
-import ThreeBackground from "./ThreeBackground";
+import ThreeBackground from "../components/ThreeBackground";
 export default function SignUp() {
     const [email,setEmail] = useState("");
     const [password,setPassword] = useState("");

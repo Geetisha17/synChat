@@ -3,9 +3,12 @@ import { auth, db } from "../firebase";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import {doc , getDoc  } from "firebase/firestore";
-import jsPDF from "jspdf";
-import ThreeBackground from "./ThreeBackground";
+import ThreeBackground from "../components/ThreeBackground";
 import "../ChatPage.css";  
+import Sidebar from "../components/Sidebar";
+import ChatWindow from "../components/ChatWindow";
+import ExportButtons from "../components/ExportButtons";
+import MessageInput from "../components/MessageInput";
 
 export default function Home() {
     const [message, setMessage] = useState("");
@@ -13,6 +16,7 @@ export default function Home() {
     const [userInfo,setUserInfo] = useState(null);
     const [previousChats,setPreviousChats] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [imageMode,setImageMode] = useState(false);
     const navigate = useNavigate();
 
     const sendMessage = async () => {
@@ -25,21 +29,40 @@ export default function Home() {
 
         const userMessage = message;
         setMessage("");
-        setChat(prevChat => [...prevChat, { user: userMessage, bot: <span className="bouncing-dots"></span> }]);
+        setChat(prevChat => [...prevChat, { user: userMessage, bot: imageMode? "Generating image" : <span className="bouncing-dots"></span> }]);
         try {
-            const res = await fetch("http://localhost:5000/api/message", {
+            if(imageMode)
+            {
+                const res = await fetch("http://localhost:5000/api/image",{
+                    method:"POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({prompt:userMessage}),
+                });
+
+                const data = await res.json();
+                setChat(prev=>{
+                    const updatedChat = [...prev];
+                    updatedChat[updatedChat.length-1].bot = (
+                        `data:image/png;base64,${data.image}`
+                    );
+                    return updatedChat;
+                })
+            }
+            else{
+                const res = await fetch("http://localhost:5000/api/message", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({message}),
-            });
+                });
 
-            const data = await res.json();
-            const cleanReply = data.reply.replace(/<\|im_[^>]+\|>/g, "").trim();
-            setChat(prevChat=>{
-                const updatedChat = [...prevChat];
-                updatedChat[updatedChat.length-1].bot = cleanReply;
-                return updatedChat;
-            })
+                const data = await res.json();
+                const cleanReply = data.reply.replace(/<\|im_[^>]+\|>/g, "").trim();
+                setChat(prevChat=>{
+                    const updatedChat = [...prevChat];
+                    updatedChat[updatedChat.length-1].bot = cleanReply;
+                    return updatedChat;
+                })
+            }
             
         } catch (error) {
             console.error(error.message);
@@ -121,39 +144,9 @@ export default function Home() {
             console.log(error.message);
         }
     }
-    const downloadFile = (content, filename, type = "text/plain") => {
-        const blob = new Blob([content], { type });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-    };
-    const exportAsPDF = () => {
-        const doc = new jsPDF();
-        let y = 10;
-        chat.forEach((msg) => {
-            doc.text(`You: ${msg.user}`, 10, y);
-            y += 10;
-            doc.text(`Bot: ${msg.bot}`, 10, y);
-            y += 20;
-            if (y > 270) {
-                doc.addPage();
-                y = 10;
-            }
-        });
-        doc.save("chat.pdf");
-    };
-    const formatChatAsText = () => {
-        return chat.map((msg, i) =>
-            `Chat #${i + 1}\nYou: ${msg.user}\nBot: ${msg.bot}\n---\n`
-        ).join("\n");
-    };
-
     const extractKeyword = (messages) => {
         const stopwords = new Set([
-            "tell","me","the", "is", "at", "which", "on", "a", "an", "and", "or", "but", "of", "to", "in", "for", "with", "as", "by", "it", "this", "that", "are", "was"
+            "what","tell","me","the", "is", "at", "which", "on", "a", "an", "and", "or", "but", "of", "to", "in", "for", "with", "as", "by", "it", "this", "that", "are", "was"
         ]);
     
         const wordCounts = {};
@@ -220,75 +213,28 @@ export default function Home() {
     return (
         <div className="chat-container">
             <ThreeBackground/>
-            <div className="sidebar">
-                <h2>AI Chat Bot</h2>
-                <input
-                    type="text"
-                    className="chat-search"
-                    placeholder="Search Chats..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                <Sidebar
+                userInfo={userInfo}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                previousChats={previousChats}
+                loadChat={loadChat}
+                deleteChat={deleteChat}
+                setNewChat={setNewChat}
+                handleLogout={handleLogout}
+                setMessage={setMessage}
                 />
-                {
-                    userInfo && (
-                        <div className="userInfo-pfp">
-                            <h3>{userInfo.user}</h3>
-                            <h4>{userInfo.email}</h4>
-                        </div>
-                    )
-                }
-                <button className="newChatBtn" onClick={setNewChat}>➕ New Chat</button>
-                <div>
-                    <h3>Previous Chats</h3>
-                    {
-            previousChats
-                .map((c, idx) => (
-                    <div key={idx} className="chat-list-item">
-                        <button className="prevChat-btn" onClick={() => loadChat(c.messages)}>
-                            {c.name || `Chat ${previousChats.length - idx}`}
-                        </button>
-                        <button className="delete-btn" onClick={() => deleteChat(idx)}>🗑️</button>
-                    </div>
-                ))
-                }
+                <div className="chat-window">
+                    <ExportButtons chat={chat} />
+                    <ChatWindow chat={chat} />
+                    <MessageInput
+                        message={message}
+                        setMessage={setMessage}
+                        sendMessage={sendMessage}
+                        imageMode={imageMode}
+                        setImageMode={setImageMode}
+                    />
                 </div>
-                <button className="logoutBtn" onClick={handleLogout}>Logout</button>
-            </div>
-
-            <div className="chat-window">
-            <div className="export-buttons">
-                <button onClick={() => downloadFile(formatChatAsText(), "chat.txt")} title="Download as Text">📄 TXT</button>
-                <button onClick={exportAsPDF} title="Download as PDF">📕 PDF</button>
-            </div>
-                <div className="chat-messages">
-                        {Array.isArray(chat) &&
-                        chat.map((c, idx) => (
-                            <div key={idx}>
-                                <div className="message user">
-                                    <h3>You:</h3>
-                                    <p>{c.user}</p>
-                                </div>
-                                {
-                                    c.bot && (<div className="message bot">
-                                    <h3>Bot:</h3>
-                                    <p>{c.bot}</p>
-                                </div>)
-                                }
-                            </div>
-                    ))}
-                </div>
-
-                <div className="input-area">
-                    <textarea
-                        rows="2"
-                        cols="50"
-                        value={message}
-                        placeholder="Type your message here..."
-                        onChange={(e) => setMessage(e.target.value)}
-                    ></textarea>
-                    <button className='sendbtn' onClick={sendMessage}>Send</button>
-                </div>
-            </div>
         </div>
     );
 }

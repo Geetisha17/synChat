@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import ThreeBackground from './ThreeBackground';
-import Login from './Login';
-import Signup from './SignUp';
+import Login from '../pages/Login';
+import Signup from '../pages/SignUp';
 
 export default function Main() {
   const [activeComponent, setActiveComponent] = useState('login'); // 'login' or 'signup'
