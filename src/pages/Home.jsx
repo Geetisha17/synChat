@@ -33,7 +33,7 @@ export default function Home() {
         try {
             if(imageMode)
             {
-                const res = await fetch("http://localhost:5000/api/image",{
+                const res = await fetch("http://localhost:5000/api/chat/image",{
                     method:"POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({prompt:userMessage}),
@@ -49,7 +49,7 @@ export default function Home() {
                 })
             }
             else{
-                const res = await fetch("http://localhost:5000/api/message", {
+                const res = await fetch("http://localhost:5000/api/chat/message", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({message}),
@@ -188,7 +188,7 @@ export default function Home() {
                 })
             });
             const result = await res.json();
-            if(!res) throw new Error(result.error || "Failed to save");
+            if(!res.ok) throw new Error(result.error || "Failed to save");
 
             setPreviousChats(prev=>[{name:keyword, messages : [...chat]},...prev]);
         } catch (error) {
