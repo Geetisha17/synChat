@@ -29,7 +29,7 @@ export default function SignUp() {
             }
             toast.success("User is Registered");
             console.log("User registered succesfully");
-            navigate("/");
+            navigate("/chat");
         } catch (error) {
             // toast.error(`User not registered ${error.message}`);
             console.log(error.message);
