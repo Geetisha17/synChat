@@ -7,7 +7,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 
 const app = express();
 app.use(cors({
-  origin: ["http://localhost:3000","http://174.129.135.117:5000", "http://localhost:5173" , "https://syn-chat-l0gwxnkpq-geetishatandongmailcoms-projects.vercel.app/"],
+  origin: ["http://localhost:3000","http://174.129.135.117:5000", "http://localhost:5173" , "https://syn-chat-l0gwxnkpq-geetishatandongmailcoms-projects.vercel.app/" , "https://syn-chat.vercel.app/"],
   methods: ['GET', 'POST', "PUT", "DELETE", "OPTIONS"],
   credentials:true
 }));
