@@ -1,110 +1,149 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { auth, db } from "../firebase";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import {doc , getDoc  } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import ThreeBackground from "../components/ThreeBackground";
-import "../ChatPage.css";  
+import "../ChatPage.css";
 import Sidebar from "../components/Sidebar";
 import ChatWindow from "../components/ChatWindow";
 import ExportButtons from "../components/ExportButtons";
 import MessageInput from "../components/MessageInput";
 
+const API_BASE = "http://174.129.135.117:5000/api/chat";
+
 export default function Home() {
     const [message, setMessage] = useState("");
     const [chat, setChat] = useState([]);
-    const [userInfo,setUserInfo] = useState(null);
-    const [previousChats,setPreviousChats] = useState([]);
+    const [userInfo, setUserInfo] = useState(null);
+    const [previousChats, setPreviousChats] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
-    const [imageMode,setImageMode] = useState(false);
+    const [imageMode, setImageMode] = useState(false);
     const navigate = useNavigate();
 
     const sendMessage = async () => {
         if (!message.trim()) return;
         const user = auth.currentUser;
-        if (!user) {
-            toast.error("User not logged in");
-            return;
-        }
+        if (!user) return toast.error("User not logged in");
 
         const userMessage = message;
         setMessage("");
-        setChat(prevChat => [...prevChat, { user: userMessage, bot: imageMode? "Generating image" : <span className="bouncing-dots"></span> }]);
+        setChat(prev => [...prev, { user: userMessage, bot: imageMode ? "Generating image..." : <span className="bouncing-dots" /> }]);
+
         try {
-            if(imageMode)
-            {
-                const res = await fetch(`http://174.129.135.117:5000/api/chat/image`,{
-                    method:"POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({prompt:userMessage}),
+            if (imageMode) {
+                const res = await axios.post(`${API_BASE}/image`, { prompt: userMessage });
+                const imageUrl = res.data.image;
+                setChat(prev => {
+                    const updated = [...prev];
+                    updated[updated.length - 1].bot = `data:image/png;base64,${imageUrl}`;
+                    return updated;
                 });
-
-                const data = await res.json();
-                setChat(prev=>{
-                    const updatedChat = [...prev];
-                    updatedChat[updatedChat.length-1].bot = (
-                        `data:image/png;base64,${data.image}`
-                    );
-                    return updatedChat;
-                })
-            }
-            else{
-                const res = await fetch(`http://174.129.135.117:5000/api/chat/message`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({message}),
+            } else {
+                const res = await axios.post(`${API_BASE}/message`, { message: userMessage });
+                const reply = res.data.reply.replace(/<\|im_[^>]+\|>/g, "").trim();
+                setChat(prev => {
+                    const updated = [...prev];
+                    updated[updated.length - 1].bot = reply;
+                    return updated;
                 });
-
-                const data = await res.json();
-                const cleanReply = data.reply.replace(/<\|im_[^>]+\|>/g, "").trim();
-                setChat(prevChat=>{
-                    const updatedChat = [...prevChat];
-                    updatedChat[updatedChat.length-1].bot = cleanReply;
-                    return updatedChat;
-                })
             }
-            
         } catch (error) {
-            console.error(error.message);
-        setChat(prevChat => {
-            const updatedChat = [...prevChat];
-            updatedChat[updatedChat.length - 1].bot = "Error: Unable to get response.";
-            return updatedChat;
-        });
+            console.error(error);
+            setChat(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1].bot = "Error: Unable to get response.";
+                return updated;
+            });
         }
     };
 
-    const deleteChat = async(chatsIdx)=>{
+    const deleteChat = async (idx) => {
         const user = auth.currentUser;
-        if(!user)
-        {
-            toast.error("User not logged in");
-            return;
-        }
-        try{
-            const res = await fetch(`http://174.129.135.117:5000/api/chat/delete`,{
-                method:"DELETE",
-                headers:{"Content-Type":"application/json"},
-                body: JSON.stringify({userId:user.uid , chatIndex:chatsIdx})
-            });
+        if (!user) return toast.error("User not logged in");
 
-            const result = await res.json();
-            console.log("Server response:", result);
-
-            if(!res.ok) throw new Error("failed to delete chat from server");
-
-            setPreviousChats(prev=>prev.filter((_,idx)=> idx!==chatsIdx));
+        try {
+            await axios.delete(`${API_BASE}/delete/${user.uid}/${idx}`);
+            toast.success("Chat deleted");
+            setPreviousChats(prev => prev.filter((_, i) => i !== idx));
             fetchChatHistory(user.uid);
-            toast.success("Chat is sucessfully deleted");
-        }catch(error)
-        {
-            console.log(error.message);
-            toast.error(`Error!! ${error.message}`);
+        } catch (err) {
+            toast.error(`Error: ${err.message}`);
         }
-    }
+    };
+
+    const fetchChatHistory = async (userId) => {
+        try {
+            const res = await axios.get(`${API_BASE}/history/${userId}`);
+            setPreviousChats(Array.isArray(res.data.chat) ? res.data.chat : []);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const fetchUserInfo = async (userId) => {
+        try {
+            const userRef = doc(db, "Users", userId);
+            const snap = await getDoc(userRef);
+            if (snap.exists()) setUserInfo(snap.data());
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const extractKeyword = (messages) => {
+        const stopwords = new Set([
+            "what", "tell", "me", "the", "is", "at", "which", "on", "a", "an", "and", "or", "but", "of", "to", "in", "for", "with", "as", "by", "it", "this", "that", "are", "was"
+        ]);
+        const counts = {};
+        messages.flatMap(msg => msg.user.toLowerCase().split(/\W+/))
+            .forEach(word => {
+                if (word && !stopwords.has(word)) {
+                    counts[word] = (counts[word] || 0) + 1;
+                }
+            });
+        return Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([word]) => word)
+            .join(" ") || "Chat";
+    };
+
+    const setNewChat = async () => {
+        if (chat.length === 0) return;
+        const user = auth.currentUser;
+        if (!user) return toast.error("User not logged in");
+
+        const keyword = extractKeyword(chat);
+        try {
+            await axios.post(`${API_BASE}/save/${user.uid}`, {
+                name: keyword,
+                messages: chat
+            });
+            toast.success("Chat saved");
+            setPreviousChats(prev => [{ name: keyword, messages: [...chat] }, ...prev]);
+        } catch (err) {
+            toast.error("Failed to save chat: " + err.message);
+        } finally {
+            setChat([]);
+        }
+    };
+
+    const loadChat = (messages) => setChat(messages);
+
+    const handleLogout = async () => {
+        try {
+            await auth.signOut();
+            navigate("/");
+            toast.success("Logged out");
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
             if (!user) {
                 navigate("/login");
                 toast.error("You must be logged in to access this page");
@@ -116,104 +155,10 @@ export default function Home() {
         return () => unsubscribe();
     }, [navigate]);
 
-    const fetchChatHistory = async (userId) => {
-        try {
-            const res = await fetch(`http://174.129.135.117:5000/api/chat/history?userId=${userId}`);
-            const data = await res.json();
-            if (Array.isArray(data.chat)) {
-                setPreviousChats(data.chat);
-                console.log(data.chat);
-            } else {
-                setPreviousChats([]);
-            }
-        } catch (error) {
-            console.log(error.message);
-        }
-    };
-
-    const fetchUserInfo = async(userId)=>{
-        try {
-            const useRef = doc(db,"Users",userId);
-            const userSnap = await getDoc(useRef);
-
-            if(userSnap.exists())
-            {
-                setUserInfo(userSnap.data());
-            }
-        } catch (error) {
-            console.log(error.message);
-        }
-    }
-    const extractKeyword = (messages) => {
-        const stopwords = new Set([
-            "what","tell","me","the", "is", "at", "which", "on", "a", "an", "and", "or", "but", "of", "to", "in", "for", "with", "as", "by", "it", "this", "that", "are", "was"
-        ]);
-    
-        const wordCounts = {};
-        const allWords = messages.flatMap(msg => msg.user.toLowerCase().split(/\W+/));
-    
-        allWords.forEach(word => {
-            if (word && !stopwords.has(word)) {
-                wordCounts[word] = (wordCounts[word] || 0) + 1;
-            }
-        });
-    
-        const sortedWords = Object.entries(wordCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3) 
-            .map(([word]) => word);
-    
-        return sortedWords.length > 0 ? sortedWords.join(" ") : "Chat";
-    };
-    
-    const setNewChat= async()=>{
-        if(chat.length===0) return;
-
-        const user =auth.currentUser;
-        if(!user)
-        {
-            toast.error("User not logged in");
-            return;
-        }
-        const keyword = extractKeyword(chat);
-
-        try {
-            const res = await fetch(`http://174.129.135.117:5000/api/chat/save`,{
-                method:"POST",
-                headers:{"Content-Type":"application/json"},
-                body: JSON.stringify({
-                    userId: user.uid,
-                    name:keyword,
-                    messages:chat
-                })
-            });
-            const result = await res.json();
-            if(!res.ok) throw new Error(result.error || "Failed to save");
-
-            setPreviousChats(prev=>[{name:keyword, messages : [...chat]},...prev]);
-        } catch (error) {
-            toast.error("Error in saving chat "+error.message);
-        }
-        setChat([]);
-    }
-    const loadChat = (chatMessages)=>{
-        setChat(chatMessages);
-    }
-
-    async function handleLogout() {
-        try {
-            await auth.signOut();
-            navigate("/");
-            toast.success("Successfully logged out");
-        } catch (e) {
-            console.log(e.message);
-        }
-    }
-    
     return (
         <div className="chat-container">
-            <ThreeBackground/>
-                <Sidebar
+            <ThreeBackground />
+            <Sidebar
                 userInfo={userInfo}
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
@@ -223,18 +168,18 @@ export default function Home() {
                 setNewChat={setNewChat}
                 handleLogout={handleLogout}
                 setMessage={setMessage}
+            />
+            <div className="chat-window">
+                <ExportButtons chat={chat} />
+                <ChatWindow chat={chat} />
+                <MessageInput
+                    message={message}
+                    setMessage={setMessage}
+                    sendMessage={sendMessage}
+                    imageMode={imageMode}
+                    setImageMode={setImageMode}
                 />
-                <div className="chat-window">
-                    <ExportButtons chat={chat} />
-                    <ChatWindow chat={chat} />
-                    <MessageInput
-                        message={message}
-                        setMessage={setMessage}
-                        sendMessage={sendMessage}
-                        imageMode={imageMode}
-                        setImageMode={setImageMode}
-                    />
-                </div>
+            </div>
         </div>
     );
 }
