@@ -6,7 +6,11 @@ import connectDB from "./database/database.js";
 import chatRoutes from "./routes/chatRoutes.js";
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "https://syn-chat.vercel.app/"],
+  methods: ['GET', 'POST', "PUT", "DELETE", "OPTIONS"],
+  credentials:true
+}));
 app.use(express.json());
 connectDB();
 

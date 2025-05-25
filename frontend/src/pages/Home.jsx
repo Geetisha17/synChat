@@ -33,7 +33,7 @@ export default function Home() {
         try {
             if(imageMode)
             {
-                const res = await fetch("http://localhost:5000/api/chat/image",{
+                const res = await fetch(`${process.env.VITE_API_URL}/api/chat/image`,{
                     method:"POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({prompt:userMessage}),
@@ -49,7 +49,7 @@ export default function Home() {
                 })
             }
             else{
-                const res = await fetch("http://localhost:5000/api/chat/message", {
+                const res = await fetch(`${process.env.VITE_API_URL}/api/chat/message`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({message}),
@@ -82,7 +82,7 @@ export default function Home() {
             return;
         }
         try{
-            const res = await fetch("http://localhost:5000/api/chat/delete",{
+            const res = await fetch(`${process.env.VITE_API_URL}/api/chat/delete`,{
                 method:"DELETE",
                 headers:{"Content-Type":"application/json"},
                 body: JSON.stringify({userId:user.uid , chatIndex:chatsIdx})
@@ -118,7 +118,7 @@ export default function Home() {
 
     const fetchChatHistory = async (userId) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/chat/history?userId=${userId}`);
+            const res = await fetch(`${process.env.VITE_API_URL}/api/chat/history?userId=${userId}`);
             const data = await res.json();
             if (Array.isArray(data.chat)) {
                 setPreviousChats(data.chat);
@@ -178,7 +178,7 @@ export default function Home() {
         const keyword = extractKeyword(chat);
 
         try {
-            const res = await fetch("http://localhost:5000/api/chat/save",{
+            const res = await fetch(`${process.env.VITE_API_URL}/api/chat/save`,{
                 method:"POST",
                 headers:{"Content-Type":"application/json"},
                 body: JSON.stringify({
