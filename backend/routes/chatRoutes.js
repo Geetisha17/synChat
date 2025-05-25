@@ -9,9 +9,9 @@ import {
 
 const router = express.Router();
 
-router.get("/history", getChatHistory);
-router.delete("/delete", deleteChat);
-router.post("/save", saveChat);
+router.get("/history/:userId", getChatHistory);
+router.delete("/delete/:userId/:chatIndex", deleteChat);
+router.post("/save/:userId", saveChat);
 router.post("/message", sendMessage);
 router.post("/image", generateImage);
 router.get("/",(req,res)=>{

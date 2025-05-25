@@ -7,7 +7,7 @@ const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 export const getChatHistory = async (req, res) => {
-  const { userId } = req.query;
+  const { userId } = req.params;
   if (!userId) return res.status(400).json({ error: "userId is required" });
 
   try {
@@ -32,7 +32,7 @@ export const getChatHistory = async (req, res) => {
 };
 
 export const deleteChat = async (req, res) => {
-  const { userId, chatIndex } = req.body;
+  const { userId, chatIndex } = req.params;
   if (!userId || chatIndex === undefined) {
     return res.status(400).json({ error: "User ID and chat index are required" });
   }
@@ -53,7 +53,8 @@ export const deleteChat = async (req, res) => {
 };
 
 export const saveChat = async (req, res) => {
-  const { userId, messages, name } = req.body;
+  const { userId } = req.params;
+  const {messages, name} = req.body;
 
   if (!userId || !messages?.length) {
     return res.status(400).json({ error: "Missing userId or messages" });
