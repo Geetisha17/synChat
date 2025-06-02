@@ -6,14 +6,24 @@ import connectDB from "./database/database.js";
 import chatRoutes from "./routes/chatRoutes.js";
 
 const app = express();
-app.use(cors({
-  origin: [
-    "https://syn-chat.vercel.app/",
-    "http://localhost:3000",
-     "http://localhost:5173"],
-  methods: ['GET', 'POST', "PUT", "DELETE", "OPTIONS"],
-  credentials:true
-}));
+const allowedOrigins = [
+  "https://syn-chat.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:5173"
+];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  })
+);
 app.use(express.json());
 connectDB();
 
