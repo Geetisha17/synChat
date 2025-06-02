@@ -6,15 +6,18 @@ import connectDB from "./database/database.js";
 import chatRoutes from "./routes/chatRoutes.js";
 
 const app = express();
+app.use(express.json());
+connectDB();
+
 app.use(cors({
-  origin: ["http://localhost:3000",
-     "http://localhost:5173"  , 
-     "https://syn-chat.vercel.app"],
+  origin: [
+    "https://syn-chat.vercel.app",
+    "http://localhost:3000",
+     "http://localhost:5173"],
   methods: ['GET', 'POST', "PUT", "DELETE", "OPTIONS"],
   credentials:true
 }));
-app.use(express.json());
-connectDB();
+
 
 app.use("/api/chat", chatRoutes);
 
