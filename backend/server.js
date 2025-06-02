@@ -9,7 +9,8 @@ const app = express();
 app.use(cors({
   origin: ["http://localhost:3000",
      "http://localhost:5173"  , 
-     "https://syn-chat.vercel.app"],
+     "https://syn-chat.vercel.app",
+    "https://ai-chat-bot-1z64.onrender.com"],
   methods: ['GET', 'POST', "PUT", "DELETE", "OPTIONS"],
   credentials:true
 }));
