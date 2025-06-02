@@ -11,7 +11,7 @@ import ChatWindow from "../components/ChatWindow";
 import ExportButtons from "../components/ExportButtons";
 import MessageInput from "../components/MessageInput";
 
-const API_BASE = "http://174.129.135.117:5000/api/chat";
+const API_BASE = "https://ai-chat-bot-1z64.onrender.com/api/chat";
 
 export default function Home() {
     const [message, setMessage] = useState("");
