@@ -8,9 +8,8 @@ import chatRoutes from "./routes/chatRoutes.js";
 const app = express();
 app.use(cors({
   origin: ["http://localhost:3000",
-    "http://174.129.135.117:5000",
      "http://localhost:5173"  , 
-     "http://ai-chat-bot-application.s3-website-us-east-1.amazonaws.com"],
+     "https://syn-chat.vercel.app"],
   methods: ['GET', 'POST', "PUT", "DELETE", "OPTIONS"],
   credentials:true
 }));
