@@ -154,7 +154,7 @@ export default function Home() {
         });
         return () => unsubscribe();
     }, [navigate]);
-
+    console.log(API_BASE);
     return (
         <div className="chat-container">
             <ThreeBackground />
